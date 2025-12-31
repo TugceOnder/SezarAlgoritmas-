@@ -1,61 +1,68 @@
 ﻿using System;
+using System.Linq;
 
 namespace SezarAlgoritması
 {
-    public class SezarAlgoritması
+    class Program
     {
-        // Sezar şifreleme fonksiyonu
+        // Türk alfabesi (29 harf)
+        static readonly string TurkishUpper = "ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ";
+        static readonly string TurkishLower = "abcçdefgğhıijklmnoöprsştuüvyz";
+
+        // Şifreleme fonksiyonu
         static string Encrypt(string text, int shift)
         {
             char[] buffer = text.ToCharArray();
+            int alphabetLength = TurkishUpper.Length; // 29
 
-            for (int i = 0; i < buffer.Length; i++) // for döngüsü ile mesajın her karakterini sırayla alıyoruz.
+            for (int i = 0; i < buffer.Length; i++)
             {
                 char c = buffer[i];
 
-                if (char.IsLetter(c)) // i. karakteri al ve c'ye koy
+                if (TurkishUpper.Contains(c))
                 {
-                    char offset = char.IsUpper(c) ? 'A' : 'a'; // Büyük/küçük harf farkını hesaplıyoruz.
-                    c = (char)(((c + shift - offset) % 26 + 26) % 26 + offset); // negatif kaydırma için
-                    buffer[i] = c; // Şifrelenmiş harfi karakter dizisine geri koyuyoruz.
+                    int index = TurkishUpper.IndexOf(c);
+                    buffer[i] = TurkishUpper[(index + shift + alphabetLength) % alphabetLength];
                 }
+                else if (TurkishLower.Contains(c))
+                {
+                    int index = TurkishLower.IndexOf(c);
+                    buffer[i] = TurkishLower[(index + shift + alphabetLength) % alphabetLength];
+                }
+                // Harf değilse (boşluk, sayı, noktalama) aynen bırakılır
             }
 
             return new string(buffer);
         }
 
-        // Sezar şifre çözme fonksiyonu (Encrypt'in tersini çağırır)
+        // Şifre çözme
         static string Decrypt(string text, int shift)
         {
-            return Encrypt(text, -shift); // ters kaydırma
+            return Encrypt(text, -shift);
         }
 
-        // Brute-force ile tüm kaydırmaları deneyip listeler
+        // Brute-force (29 olasılık)
         static void BruteForce(string encryptedMessage)
         {
             Console.WriteLine("\nTüm olası çözümler:");
-            for (int shift = 0; shift < 26; shift++)
+            for (int shift = 0; shift < TurkishUpper.Length; shift++)
             {
-                string attempt = Decrypt(encryptedMessage, shift);
-                Console.WriteLine($"Shift {shift}: {attempt}");
+                Console.WriteLine($"Shift {shift}: {Decrypt(encryptedMessage, shift)}");
             }
         }
 
         static void Main()
         {
-            Console.WriteLine("Sezar Algoritması - Oluşturma(1) / Çözme(0)");
-            Console.WriteLine("Çıkmak için 'q' girin.\n");
+            Console.WriteLine("=== TÜRKÇE DESTEKLİ SEZAR ALGORİTMASI ===");
+            Console.WriteLine("Şifreleme (1) | Çözme / Brute Force (0) | Çıkış (q)\n");
 
             while (true)
             {
-                Console.Write("Seçiminiz (1 = oluşturma, 0 = çözme, q = çıkış): ");
+                Console.Write("Seçiminiz: ");
                 string choice = Console.ReadLine()?.Trim();
 
                 if (string.IsNullOrEmpty(choice))
-                {
-                    Console.WriteLine("Lütfen geçerli bir seçim yapın.");
                     continue;
-                }
 
                 if (choice.Equals("q", StringComparison.OrdinalIgnoreCase))
                 {
@@ -63,33 +70,31 @@ namespace SezarAlgoritması
                     break;
                 }
 
-                if (choice == "1") // Oluşturma (şifreleme)
+                if (choice == "1")
                 {
-                    Console.Write("Şifrelenecek mesajı girin: ");
+                    Console.Write("Şifrelenecek mesaj: ");
                     string message = Console.ReadLine() ?? "";
 
-                    Console.Write("Kaydırma miktarını girin (0-25): ");
-                    string shiftInput = Console.ReadLine();
-                    if (!int.TryParse(shiftInput, out int shift))
+                    Console.Write("Kaydırma miktarı (0-28): ");
+                    if (!int.TryParse(Console.ReadLine(), out int shift))
                     {
-                        Console.WriteLine("Geçersiz kaydırma değeri. Lütfen bir sayı girin.\n");
+                        Console.WriteLine("Geçersiz sayı!\n");
                         continue;
                     }
 
-                    // Normalize shift (negatif veya büyük sayılar için)
-                    shift = ((shift % 26) + 26) % 26;
+                    shift = ((shift % 29) + 29) % 29;
 
                     string encrypted = Encrypt(message, shift);
                     string decrypted = Decrypt(encrypted, shift);
 
-                    Console.WriteLine("\n--- Sonuç ---");
-                    Console.WriteLine("Şifrelenmiş mesaj: " + encrypted);
-                    Console.WriteLine("Tekrar çözülmüş mesaj (kontrol): " + decrypted);
+                    Console.WriteLine("\n--- SONUÇ ---");
+                    Console.WriteLine("Şifreli Metin : " + encrypted);
+                    Console.WriteLine("Çözülmüş Metin: " + decrypted);
                     Console.WriteLine("--------------\n");
                 }
-                else if (choice == "0") // Çözme (brute-force)
+                else if (choice == "0")
                 {
-                    Console.Write("Çözülecek şifreli mesajı girin: ");
+                    Console.Write("Şifreli mesajı girin: ");
                     string encryptedMessage = Console.ReadLine() ?? "";
 
                     if (string.IsNullOrWhiteSpace(encryptedMessage))
@@ -103,7 +108,7 @@ namespace SezarAlgoritması
                 }
                 else
                 {
-                    Console.WriteLine("Geçersiz seçim! Lütfen 1, 0 veya q girin.\n");
+                    Console.WriteLine("Geçersiz seçim!\n");
                 }
             }
         }
